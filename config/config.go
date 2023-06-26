@@ -3,6 +3,7 @@ package config
 import (
 	"crypto/tls"
 	"fmt"
+	"os"
 	"strings"
 	"time"
 )
@@ -38,6 +39,7 @@ type Config struct {
 	ExitOnExternalFailure bool
 	ExternalFailureSource string
 	ExternalFailureRegexp string
+	SslKeylogFile string
 }
 
 // Addr returns the string concatenated with hostname and port number.
@@ -125,6 +127,14 @@ func (c *Config) TLSConfig() (*tls.Config, error) {
 	config := tls.Config{
 		InsecureSkipVerify: c.Insecure,
 		CipherSuites: c.GetCiphersuites(),
+	}
+
+	sslKeyLog := c.SslKeylogFile
+	if len(sslKeyLog) != 0 {
+		kl, err := os.OpenFile(sslKeyLog, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0600)
+		if err == nil {
+			config.KeyLogWriter = kl
+		}
 	}
 
 	if config.NextProtos == nil {
