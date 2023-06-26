@@ -30,6 +30,7 @@ func main() {
 	flags.StringP("host", "h", "127.0.0.1", "Target host")
 	flags.IntP("port", "p", 0, "Target port")
 	flags.StringP("server-name", "n", "", "Server name (SNI)")
+	flags.StringP("ssl-keylog", "", "", "File to write SSL session keys to in NSS key log format")
 	flags.StringP("path", "P", "/", "Target path")
 	flags.IntP("timeout", "o", 2, "Time seconds to test timeout")
 	flags.Int("max-header-length", 4000, "Maximum length of HTTP header")
@@ -152,6 +153,11 @@ func run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	sslKeylogFile, err := flags.GetString("ssl-keylog")
+	if err != nil {
+		return err
+	}
+
 	if port == 0 {
 		if tls {
 			port = 443
@@ -179,6 +185,7 @@ func run(cmd *cobra.Command, args []string) error {
 		ExitOnExternalFailure: exitOnExternalFailure,
 		ExternalFailureSource: externalFailureSource,
 		ExternalFailureRegexp: externalFailureRegexp,
+		SslKeylogFile: sslKeylogFile,
 	}
 
 	success, err := h2spec.Run(c)
