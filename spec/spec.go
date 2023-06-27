@@ -172,7 +172,7 @@ func (tc *TestCase) Test(c *config.Config, seq int) error {
 		if matched {
 			if c.Verbose {
 				message := fmt.Sprintf("Test %#v is manually disabled by --exclude/-x %#v, skipping.",
-				                       fullTestID, exc)
+						       fullTestID, exc)
 				log.Println(message)
 			}
 			tc.Result = &TestResult{
@@ -183,6 +183,33 @@ func (tc *TestCase) Test(c *config.Config, seq int) error {
 			}
 			return nil
 		}
+	}
+
+	// If not special tests specified all tests should be executed.
+	should_be_executed := true
+	for _, executed := range c.ExecuteSpecificTests {
+		should_be_executed = false
+		matched, _ := regexp.MatchString(executed, fullTestID)
+		if matched {
+			should_be_executed = true
+			break;
+		}
+	}
+
+	if !should_be_executed {
+		if c.Verbose {
+			message := fmt.Sprintf("Test %#v is manually disabled since it is not " +
+					       "add by --execute-specific-tests, skipping.",
+					        fullTestID)
+			log.Println(message)
+		}
+		tc.Result = &TestResult{
+			TestCase: tc,
+			Sequence: seq,
+			Error: ErrSkipped,
+			Skipped: true,
+		}
+		return nil
 	}
 
 	if tc.Strict && !c.Strict {
